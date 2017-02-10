@@ -2,10 +2,8 @@ from ws4py.client.threadedclient import WebSocketClient
 from ws4py.client.threadedclient import WebSocketBaseClient
 import json
 import datetime
-import time
 import asyncio
 import sys
-import itertools
 
 
 class GoodGameWSChat(WebSocketBaseClient):
@@ -92,7 +90,7 @@ class GoodGameWSEntry(WebSocketClient):
 
             self.send(channel_list_request)
             try:
-                time.sleep(1)
+                await asyncio.sleep(1)
             except KeyboardInterrupt:
                 pass
             start += 50
@@ -101,7 +99,9 @@ class GoodGameWSEntry(WebSocketClient):
 
     async def _connections_manager(self):
         await self._expel_offline_channels()
+
         print('Connecting to GoodGame channels...')
+
         for new_channel in self.channels_list:
             if not self.current_connections.get(new_channel):
                 new_connection = GoodGameWSChat(self.ws, new_channel,
@@ -109,12 +109,16 @@ class GoodGameWSEntry(WebSocketClient):
                                                 self.channels_list.get(new_channel),
                                                 self.m)
                 new_connection.connect()
-                await asyncio.sleep(0.01)
                 self.current_connections.update({new_connection.__str__(): new_connection})
                 sys.stdout.flush()
                 sys.stdout.write('\rConnected {0}/{1}'.format(len(self.current_connections), self.channels_count))
-        await asyncio.sleep(0.1)
+
+                while len(self.m.websockets) != len(self.current_connections) + 2:
+                    await asyncio.sleep(0.5)
+                await asyncio.sleep(0.01)
+
         print('\nConnection is complete. Monitoring {0} GoodGame channels'.format(len(self.current_connections)))
+
         self.channels_list.clear()
 
     async def _expel_offline_channels(self):
@@ -127,4 +131,5 @@ class GoodGameWSEntry(WebSocketClient):
                 connections_to_remove.append(channel)
         for connection in connections_to_remove:
             self.current_connections.pop(connection).close()
+            await asyncio.sleep(0.1)
         return print('Refresh is complete.')

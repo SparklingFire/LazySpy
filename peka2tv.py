@@ -7,9 +7,9 @@ import datetime
 
 class Peka2TVWSConnector(WebSocketClient):
 
-    def __init__(self, ws, nicks, manager, **kwargs):
+    def __init__(self, ws, usernames, manager, **kwargs):
         super(self.__class__, self).__init__(ws, protocols=kwargs.get('protocols', None))
-        self.nicknames = nicks
+        self.usernames = usernames
         self.iter = 0
         self.manager = manager
 
@@ -38,7 +38,7 @@ class Peka2TVWSConnector(WebSocketClient):
 
         message = ''.join(str(x) for x in str(mes)[2:])
         jsoned = json.loads(message)
-        if jsoned[1]['from'].get('name').lower() in self.nicknames:
+        if jsoned[1]['from'].get('name').lower() in self.usernames:
             return self._generate_message(jsoned[1])
 
     def unhandled_error(self, error):
