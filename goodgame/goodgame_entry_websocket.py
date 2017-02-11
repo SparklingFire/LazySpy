@@ -19,6 +19,12 @@ class GoodGameWebSocket(WebSocketClient):
     def __str__(self):
         return 'GoodGame WebSocket'
 
+    def closed(self, code, reason=''):
+        try:
+            print('Подключение к вебсокету goodgame.ru оборвано.')
+        except socket_error:
+            print('Подключение к вебсокету goodgame.ru оборвано.')
+
     def received_message(self, message):
         message = json.loads(str(message))
         if message.get('type') == 'welcome':
@@ -46,6 +52,7 @@ class GoodGameWebSocket(WebSocketClient):
             await asyncio.sleep(1)
             start += 50
             counter -= 50
+        print('Загрузка списка чат-каналов GoodGame.ru завершена')
         await self._connections_manager()
 
     async def _connections_manager(self):

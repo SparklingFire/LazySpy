@@ -80,7 +80,9 @@ class MainConnector(object):
                 requests.get(self.goodgame_url)
                 await self.goodgame_connection.refresh_connections()
                 await asyncio.sleep(self.gg_rr)
-            except requests.ConnectionError:
+            except:
+                if self.goodgame_connection is None or self.goodgame_connection.terminated:
+                    self.goodgame_connection = self._goodgame_connection()
                 await self._connector(self.goodgame_url, self.goodgame_connection)
 
 if __name__ == '__main__':

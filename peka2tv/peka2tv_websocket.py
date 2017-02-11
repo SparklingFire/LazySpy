@@ -30,7 +30,7 @@ class Peka2TvWebSocket(WebSocketClient):
     def closed(self, code, reason=None):
         try:
             print('Подключение к вебсокету peka2.tv оборвано.')
-        except socket_error:
+        except:
             print('Подключение к вебсокету peka2.tv оборвано.')
 
     def received_message(self, mes):
