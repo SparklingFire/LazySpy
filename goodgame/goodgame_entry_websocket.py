@@ -66,15 +66,17 @@ class GoodGameWebSocket(WebSocketClient):
                                                         self.usernames,
                                                         self.channels_list.get(new_channel))
                 try:
-                    await asyncio.sleep(0.2)
+                    await asyncio.sleep(0.05)
                     new_connection.connect()
                     self.current_connections.update({new_connection.__str__(): new_connection})
                     sys.stdout.flush()
                     sys.stdout.write(
-                        '\rПодключился к {0}/{1} каналам'.format(len(self.current_connections), self.number_of_channels))
-                except (ConnectionResetError, socket_error) as e:
-                    print('\nЧто-то пошло не так. Ожидаю переподключения...')
-                    print(e)
+                        '\rПодключился к {0}/{1} каналам'.format(len(self.current_connections),
+                                                                 self.number_of_channels))
+                except (ConnectionResetError, RuntimeError, socket_error) as e:
+                    await asyncio.sleep(0.5)
+                    print('\nЧто-то пошло не так.')
+                    print('Error: {0}'.format(e))
                     break
         if len(self.current_connections) != 0:
             print('\nПодглядываю за {0} чат-каналами GoodGame.ru'.format(len(self.current_connections)))

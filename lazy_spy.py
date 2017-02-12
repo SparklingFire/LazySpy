@@ -1,4 +1,5 @@
 import asyncio
+import ws4py
 from socket import error as socket_error
 
 import requests
@@ -29,7 +30,7 @@ class MainConnector(object):
         return goodgame_entry_websocket.GoodGameWebSocket(self.goodgame_ws,
                                                           self.usernames,
                                                           self.gg_noc
-                                                           )
+                                                          )
 
     async def connection_maintainer(self):
         self.goodgame_connection = self._goodgame_connection()
@@ -46,10 +47,11 @@ class MainConnector(object):
             try:
                 requests.get(url)
                 try:
+                    print('Подключаюсь к вебсокету {0}'.format(ws.__str__()))
                     ws.connect()
                 except (ConnectionResetError, socket_error):
                     pass
-                except TypeError:
+                except (TypeError, ws4py.exc.HandshakeError):
                     break
                 connected = True
                 print('Подключение к {0} установлено'.format(ws.__str__()))
@@ -67,7 +69,11 @@ class MainConnector(object):
         while True:
             try:
                 self.peka2tv_connection.send('2')
-            except (AttributeError, BrokenPipeError):
+            except (AttributeError, BrokenPipeError, RuntimeError):
+                try:
+                    self.peka2tv_connection.terminate()
+                except AttributeError:
+                    pass
                 while self.peka2tv_connection.terminated:
                     self.peka2tv_connection = self._peka2tv_connection()
                     await self._connector(self.peka2tv_url, self.peka2tv_connection)
@@ -86,9 +92,24 @@ class MainConnector(object):
                 await self._connector(self.goodgame_url, self.goodgame_connection)
 
 if __name__ == '__main__':
-    main_connect = MainConnector(data_handler.get_usernames(),
-                                 data_handler.get_number_of_channels(),
-                                 data_handler.get_refresh_rate())
+    try:
+        open('settings.txt')
+    except FileNotFoundError:
+        data_handler.create_default_json()
+    answer = input(str('Желаете ввести данные из текстового файла? [Y/n]'))
+    if answer in 'Yy':
+        settings = data_handler.settings_reader()
+        try:
+            main_connect = MainConnector(settings[0],
+                                         settings[1],
+                                         settings[2]
+                                         )
+        except ValueError:
+            pass
+    else:
+        main_connect = MainConnector(data_handler.get_usernames(),
+                                     data_handler.get_number_of_channels(),
+                                     data_handler.get_refresh_rate())
     loop = asyncio.get_event_loop()
     asyncio.ensure_future(main_connect.connection_maintainer())
     try:
